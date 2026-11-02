@@ -1,0 +1,25 @@
+name: Threads 毎朝投稿
+
+on:
+  schedule:
+    # 日本時間 8:00 = UTC 23:00(前日)。混雑時は数分〜数十分遅れることがあります
+    - cron: "0 23 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "1 = 投稿せず内容の確認だけ"
+        default: "1"
+
+permissions:
+  contents: read
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 投稿する
+        env:
+          THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: python3 post_to_threads.py
