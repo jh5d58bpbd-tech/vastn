@@ -18,6 +18,8 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..', 'render'))
 import kyuke  # noqa: E402  (builds MATS / PRIMS / LIGHTS / VIEWS on import)
+import variants  # noqa: E402
+variants.apply(os.environ.get('VARIANT', ''))
 
 import bpy  # noqa: E402
 from mathutils import Vector  # noqa: E402
