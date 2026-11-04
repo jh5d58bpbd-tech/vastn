@@ -1,0 +1,13 @@
+#!/bin/bash
+# 休憩室パース 3面を Blender Cycles で書き出す。使い方: ./run_kyukei_cycles.sh [W] [H] [SPP] [view...]
+# 必要: pip3 install bpy numpy opencv-python
+cd "$(dirname "$0")"
+W=${1:-1440}; H=${2:-900}; SPP=${3:-256}
+shift 3 2>/dev/null
+VIEWS=${@:-south north kitchen}
+mkdir -p out
+for v in $VIEWS; do
+  python3 kyuke_cycles.py $v $W $H $SPP out/$v > out/${v}_log.txt 2>&1 || { echo "$v failed (see out/${v}_log.txt)"; continue; }
+  python3 post_cycles.py out/$v.npy out/kyukei_${v}_cycles.jpg 0.85
+  echo "$v done $(date +%T)"
+done
