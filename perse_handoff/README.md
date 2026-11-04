@@ -59,6 +59,10 @@ perse_handoff/
 │   ├─ run_kyukei.sh    休憩室 3面を書き出す
 │   ├─ scene.py〜scene5.py  美容室のシーン（scene5 → scene4 を読み込む）
 │   └─ run_salon.sh     美容室 4面を書き出す
+├─ blender/             ← Blender（Cycles）版（→ 4.1）
+│   ├─ kyuke_cycles.py  kyuke.py のシーンを Cycles で描く
+│   ├─ post_cycles.py   仕上げ（post2.py と同じ見た目）
+│   └─ run_kyukei_cycles.sh  休憩室 3面を書き出す
 ├─ renders/
 │   ├─ kyukei/          休憩室 最新パース（south / north / kitchen）
 │   └─ salon/           美容室 最新パース（north / east / west / south）
@@ -88,6 +92,25 @@ cd render
   無ければ1スレッド版でビルドする（動くが数倍遅い）。速くするには `brew install libomp`（または `brew install gcc`）を入れてから `rm pt && ./build.sh`。
 - 作業のコツ：**低解像度（480×300, 24spp）で確認 → OK なら本番** の順にする。
 - 露出：`post2.py` は自動露出。休憩室は自動値 × 0.85 で仕上げている（`run_kyukei.sh` に記述済み）。
+
+### 4.1 Blender（Cycles）版（2026-11 追加・比較検討中）
+
+`blender/` に、`kyuke.py` のシーンをそのまま Blender（Cycles）で描くスクリプトを追加した。
+形・素材・照明・画角は `kyuke.py` から直接読み込むので、**`kyuke.py` を直せば両方のレンダラーに反映される**。
+
+```bash
+pip3 install bpy numpy opencv-python      # bpy = Blender 本体の Python 版（Python 3.13 用）
+cd blender
+./run_kyukei_cycles.sh 480 300 32         # 試し描き（約30秒/面・4コア）
+./run_kyukei_cycles.sh                    # 本番 1440×900（→ blender/out/kyukei_<view>_cycles.jpg）
+./run_kyukei_cycles.sh 1440 900 128 north # 1面だけ
+```
+
+- `kyuke_cycles.py`：シーンを組み立てて Cycles でレンダリング（ノイズ除去は OIDN）。`SAVE_BLEND=1` を付けると `.blend` も保存するので、Blender で開いて手で調整できる。
+- `post_cycles.py`：`post2.py` と同じ写真風の仕上げ（ACES・ブルーム・周辺減光・粒子）。露出は自動値 × 0.85。
+- 照明の強さは `pt.cpp` と同じ明るさになるよう換算済み（`LIGHT_SCALE`）。
+- 外の空（sky）のパネルが Cycles では実際に部屋を照らすため、窓際が自作レンダラーより少し明るくなる。
+- 面がぴったり重なった家具（棚板と側板など）は、Cycles では黒い筋になる。それを防ぐため、部屋の外殻以外の箱を 0.1〜0.9mm だけ内側に縮めている（見た目には影響しない）。
 
 ---
 
