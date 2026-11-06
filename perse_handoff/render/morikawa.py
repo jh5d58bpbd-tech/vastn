@@ -116,7 +116,11 @@ box(-T, -T, -T, X_W+T, 0, 2.71, 'floor')                        # floor (north o
 box(-T, -T, 2.71, 5.88, 0, Z_S+T, 'floor')                      # floor (kitchen / hall)
 box(5.88, -T-0.3, 2.71, X_W+T, -0.30, Z_S+T, 'mortar')         # genkan slab (lowered)
 box(-T, CH, -T, X_W+T, CH+T, Z_S+T, 'conc_c')                   # ceiling slab
-box(0.37, 0, -T, 5.595, CH, 0, 'conc')                          # north wall (toilet + alcove + storage)
+NX1, NX2, NY1, NY2, ND = 2.95, 3.65, 1.00, 1.62, 0.16          # lit niche in the north wall (alcove)
+box(0.37, 0, -T, NX1, CH, 0, 'conc')                            # north wall, carved around the niche
+box(NX2, 0, -T, 5.595, CH, 0, 'conc')
+box(NX1, 0, -T, NX2, NY1, 0, 'conc'); box(NX1, NY2, -T, NX2, CH, 0, 'conc')
+box(NX1, NY1, -T, NX2, NY2, -ND, 'conc')                        # niche back
 box(5.595, 0, -T, 5.81+T, CH, 0.28, 'conc')                     # PS notch top
 box(5.81, 0, 0.28, 5.81+T, CH, 1.0, 'conc')                    # east of washer nook
 box(5.595, 0, 0.28, 5.81, CH, 1.0, 'conc')                      # PS (closes the slit by the washer nook)
@@ -170,14 +174,12 @@ for i in range(5):
 
 # north alcove x 2.475-4.12: lit niche in the north wall, walnut frame
 setg('shell')
-NX1, NX2, NY1, NY2, ND = 2.95, 3.65, 1.00, 1.62, 0.16
-box(NX1, NY1, -ND, NX2, NY2, 0.0, 'conc')                       # niche (cut into slab wall)
 setg('niche')
 box(NX1, NY1, -ND, NX2, NY1+0.02, 0.0, 'walnut_h')
 box(NX1-0.03, NY1-0.03, 0.0, NX2+0.03, NY1, 0.025, 'walnut_h'); box(NX1-0.03, NY2, 0.0, NX2+0.03, NY2+0.03, 0.025, 'walnut_h')
 box(NX1-0.03, NY1, 0.0, NX1, NY2, 0.025, 'walnut_v'); box(NX2, NY1, 0.0, NX2+0.03, NY2, 0.025, 'walnut_v')
 box(NX1+0.02, NY2-0.025, -0.06, NX2-0.02, NY2-0.015, -0.01, 'led', noshadow=True)
-light(((NX1+NX2)/2, NY2-0.04, -0.06), 1.6, d=(0, -1, 0.05), inner=55, outer=88, rad=0.12)
+light(((NX1+NX2)/2, NY2-0.04, -0.06), 0.7, d=(0, -1, 0.05), inner=55, outer=88, rad=0.12)
 cyl((3.15, NY1+0.02, -0.08), (3.15, NY1+0.26, -0.08), 0.06, 'vase')
 box(3.35, NY1+0.02, -0.12, 3.55, NY1+0.06, -0.03, 'book2')
 

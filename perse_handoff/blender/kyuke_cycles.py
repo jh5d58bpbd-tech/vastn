@@ -494,7 +494,9 @@ def make_material(idx):
         nt.links.new(nb.bump(nb.add(gk, nb.mul(ring, 0.05)), 0.25, 0.002), I['Normal'])
         nt.links.new(nb.mad(tone, 0.08, rough * 0.6), I['Roughness'])
     elif tex == 11:  # TV picture
-        img = nt.nodes.new('ShaderNodeTexImage'); img.image = tv_image()
+        img = nt.nodes.new('ShaderNodeTexImage')
+        shot = os.path.join(HERE, '..', 'refs', SCENE, 'tv_screen.jpg')
+        img.image = bpy.data.images.load(shot) if os.path.exists(shot) else tv_image()
         uv2 = nt.nodes.new('ShaderNodeUVMap'); uv2.uv_map = 'UVN'
         nt.links.new(uv2.outputs['UV'], img.inputs['Vector'])
         I['Base Color'].default_value = (0, 0, 0, 1)
@@ -575,6 +577,7 @@ def build(vname, W, H, spp):
         ob.location = Vector(P @ np.array(p, float))
         dirb = Vector(P @ np.array(d, float)).normalized()
         ob.rotation_euler = dirb.to_track_quat('-Z', 'Y').to_euler()
+        ob.visible_camera = False          # the lamp itself must not show as a glowing disc
         sc.collection.objects.link(ob)
 
     world = bpy.data.worlds.new('env'); world.use_nodes = True
