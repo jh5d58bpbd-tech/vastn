@@ -407,7 +407,7 @@ VIEWS = {
     'genkan_1': view(5.20, 3.35, 6.98, 3.55, 84, cy=1.30, sy=-0.35),   # from the hall to the entrance door
     'genkan_2': view(6.80, 3.70, 3.4, 2.4, 84, cy=1.15),               # from the door into the house
     'genkan_3': view(6.75, 4.30, 5.2, 2.75, 88, cy=1.15),              # shoe cabinet + hall
-    'genkan_4': view(5.75, 4.30, 6.98, 2.80, 88, cy=1.30, sy=-0.35),   # 框, door and shoe cabinet from the kitchen side
+    'genkan_4': view(5.62, 3.30, 6.98, 4.20, 95, cy=1.25, sy=-0.55),   # 框, door and shoe cabinet from the kitchen side
     # トイレ
     'toilet_1': view(4.25, 0.48, 5.60, 0.48, 96, sy=-0.65),
     'toilet_2': view(5.42, 0.85, 4.20, 0.20, 100, sy=-0.45),
