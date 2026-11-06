@@ -349,7 +349,7 @@ def downlight(x, z, I=3.0, inner=20, outer=50, col=WARM):
     cyl((x, CH-0.006, z), (x, CH-0.003, z), 0.033, 'spot_lens', noshadow=True)
     light((x, CH-0.03, z), I, inner=inner, outer=outer, col=col)
 downlight(3.10, 3.55, 2.6, col=NEUT); downlight(4.30, 3.55, 2.6, col=NEUT); downlight(5.35, 3.45, 2.2)
-downlight(5.30, 3.10, 1.4); downlight(6.43, 3.55, 1.8); downlight(3.30, 0.60, 1.3)
+downlight(5.30, 3.10, 1.4); downlight(6.43, 3.55, 1.8); downlight(3.05, 0.55, 0.9, outer=38)
 downlight(5.95, 1.95, 1.5, col=NEUT); downlight(5.35, 1.25, 1.0, col=NEUT)
 downlight(4.80, 0.48, 1.2)
 # wall AC on the kitchen partition (LDK side), above the window head line
