@@ -295,11 +295,18 @@ def tv_image():
     sky = lin((250, 196, 120)) * (1 - t) ** 2 + lin((90, 140, 210)) * (1 - (1 - t) ** 2)
     img = sky.copy()
     peak = 0.62 - 1.15 * np.abs(x - 0.47) + 0.03 * fbm1(Wp)[None, :]
-    m = y < peak; img[m] = lin((70, 70, 92))
+    m = y < peak
+    shade = np.clip(0.55 + 0.9 * (0.47 - x) + 0.25 * (fbm1(Wp, base=12)[None, :] - 0.5), 0.25, 1.1)[..., None]
+    rock = lin((92, 86, 104)) * shade
+    img[m] = rock[m]
     snow = m & (y > peak - 0.07 - 0.05 * fbm1(Wp)[None, :]); img[snow] = lin((236, 238, 245))
     ridge = y < 0.30 + 0.06 * fbm1(Wp, base=6)[None, :]; img[ridge] = lin((40, 36, 40))
     cloud = (y < 0.36 + 0.05 * fbm1(Wp, base=5)[None, :]) & (y > 0.22)
-    img[cloud] = img[cloud] * 0.2 + lin((240, 236, 232)) * 0.8
+    n2 = rng.random((Hp // 8 + 1, Wp // 8 + 1)); n2 = np.kron(n2, np.ones((8, 8)))[:Hp, :Wp]
+    from numpy.lib.stride_tricks import sliding_window_view as _sw
+    n2 = np.pad(n2, 6, mode='edge'); n2 = _sw(n2, (13, 13)).mean((-1, -2))[:Hp, :Wp]
+    ctone = (lin((246, 226, 206)) * (0.82 + 0.3 * n2[..., None]))
+    img[cloud] = img[cloud] * 0.15 + ctone[cloud] * 0.85
     fg = y < 0.12 + 0.05 * fbm1(Wp, base=8)[None, :]; img[fg] = lin((50, 34, 26))
     im = bpy.data.images.new('tvimg', Wp, Hp, float_buffer=True)
     im.colorspace_settings.name = 'Linear Rec.709'
@@ -434,6 +441,10 @@ def make_material(idx):
         stain = nb.smooth(0.52, 0.75, nb.noise(pos, 1.6, 5.0, 0.65))
         k = nb.mul(nb.mul(nb.mad(m1, 0.75, 0.58), nb.mad(m2, 0.30, 0.85)), nb.mad(m3, 0.12, 0.94))
         k = nb.mul(k, nb.mad(stain, -0.30, 1.0))
+        big = nb.smooth(0.45, 0.70, nb.noise(pos, 0.35, 4.0, 0.7))          # large cloudy patches
+        k = nb.mul(k, nb.mad(big, -0.28, 1.08))
+        spots = nb.smooth(0.66, 0.74, nb.noise(pos, 2.4, 6.0, 0.7))        # darker water-stain blotches
+        k = nb.mul(k, nb.mad(spots, -0.22, 1.0))
         k = nb.mul(k, nb.mad(nb.smooth(0.6, 0.8, nb.noise(pos, 6.0, 3.0)), 0.12, 0.94))
         height = nb.add(nb.mul(m2, 0.3), nb.mul(m3, 0.2))
         if bump > 0:
@@ -471,8 +482,8 @@ def make_material(idx):
         mixf = nb.math('POWER', nb.add(nb.mul(tone, 0.75), nb.mul(streak, 0.35)), 1.3)
         cm = nb.N.new('ShaderNodeMix'); cm.data_type = 'RGBA'
         nb.link(nb.math('MINIMUM', mixf, 1.0), cm.inputs['Factor'])
-        cm.inputs['A'].default_value = (*[float(x) for x in kyuke.srgb(56, 32, 19)], 1)
-        cm.inputs['B'].default_value = (*[float(x) for x in kyuke.srgb(170, 112, 64)], 1)
+        cm.inputs['A'].default_value = (*[float(x) for x in kyuke.srgb(38, 20, 11)], 1)
+        cm.inputs['B'].default_value = (*[float(x) for x in kyuke.srgb(150, 90, 48)], 1)
         fz = nb.mul(nb.math('FRACT', nb.math('DIVIDE', across, pw)), pw)
         fx = nb.mul(nb.math('FRACT', nb.math('DIVIDE', px, plen)), plen)
         gap = nb.math('MINIMUM', nb.math('MINIMUM', fz, nb.math('SUBTRACT', pw, fz)),
@@ -481,7 +492,7 @@ def make_material(idx):
         col = nb.mulvec(cm.outputs['Result'], nb.mul(k, gk))
         nt.links.new(col, I['Base Color'])
         nt.links.new(nb.bump(nb.add(gk, nb.mul(ring, 0.05)), 0.25, 0.002), I['Normal'])
-        nt.links.new(nb.mad(tone, 0.10, rough * 0.85), I['Roughness'])
+        nt.links.new(nb.mad(tone, 0.08, rough * 0.6), I['Roughness'])
     elif tex == 11:  # TV picture
         img = nt.nodes.new('ShaderNodeTexImage'); img.image = tv_image()
         uv2 = nt.nodes.new('ShaderNodeUVMap'); uv2.uv_map = 'UVN'

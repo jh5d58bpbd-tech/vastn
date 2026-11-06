@@ -20,5 +20,13 @@ if __name__ == '__main__':
     exposure = 0.19 / np.exp(np.mean(np.log(L + 1e-4))) * scale
     print('exposure', exposure)
     out = tonemap(img, exposure, wb=(0.97, 1.0, 1.05))
+    # optional photographic grade (CONTRAST / SAT env): deeper shadows, richer midtones
+    con = float(os.environ.get('CONTRAST', '0')); sat = float(os.environ.get('SAT', '1'))
+    if con:
+        out = np.clip(out + con * (out - 0.5) * (1 - np.abs(2 * out - 1)) * 2, 0, 1)
+        out = np.clip(out - con * 0.04 * (1 - out) ** 3, 0, 1)
+    if sat != 1:
+        g = (0.2126 * out[..., 0] + 0.7152 * out[..., 1] + 0.0722 * out[..., 2])[..., None]
+        out = np.clip(g + (out - g) * sat, 0, 1)
     sharp = cv2.addWeighted(out, 1.15, cv2.GaussianBlur(out, (0, 0), 1.0), -0.15, 0)
     cv2.imwrite(outp, (np.clip(sharp, 0, 1)[..., ::-1] * 255 + 0.5).astype(np.uint8), [cv2.IMWRITE_JPEG_QUALITY, 93])

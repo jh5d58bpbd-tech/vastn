@@ -8,6 +8,6 @@ VIEWS=${@:-ldk_1 ldk_2 ldk_3 ldk_4 datsui_1 datsui_2 datsui_3 datsui_4 genkan_1 
 mkdir -p out/morikawa
 for v in $VIEWS; do
   SCENE=morikawa python3 kyuke_cycles.py $v $W $H $SPP out/morikawa/$v > out/morikawa/${v}_log.txt 2>&1 || { echo "$v failed (see out/morikawa/${v}_log.txt)"; continue; }
-  python3 post_cycles.py out/morikawa/$v.npy out/morikawa/morikawa_$v.jpg ${EXPO:-0.62}
+  CONTRAST=${CONTRAST:-0.18} SAT=${SAT:-1.06} python3 post_cycles.py out/morikawa/$v.npy out/morikawa/morikawa_$v.jpg ${EXPO:-0.60}
   echo "$v done $(date +%T)"
 done

@@ -25,12 +25,12 @@ def mat(name, rgb, typ=0, tex=0, ks=0.0, ex=50, emit=(0, 0, 0), bump=0.0, axis=-
     MATS.append((c, typ, tex, ks, ex, emit, bump, axis))
 
 # tex 9 = exposed concrete (bump>0: formwork panel joints + tie holes), tex 10 = walnut/acacia flooring
-mat('conc', (146, 145, 142), tex=9, ks=0.02, ex=20)
-mat('conc_p', (146, 145, 142), tex=9, ks=0.02, ex=20, bump=1.0)    # formwork panel wall (TV wall)
-mat('conc_c', (136, 135, 132), tex=9, ks=0.01, ex=15)              # ceiling slab
-mat('floor', (150, 100, 62), tex=10, ks=0.10, ex=260, axis=0)      # flooring along x (toward the window)
-mat('floor_z', (150, 100, 62), tex=10, ks=0.10, ex=260, axis=2)
-mat('walnut', (104, 68, 44), tex=4, ks=0.06, ex=90)
+mat('conc', (150, 149, 143), tex=9, ks=0.02, ex=20)
+mat('conc_p', (150, 149, 143), tex=9, ks=0.02, ex=20, bump=1.0)    # formwork panel wall (TV wall)
+mat('conc_c', (156, 154, 146), tex=9, ks=0.01, ex=15)              # ceiling slab
+mat('floor', (150, 100, 62), tex=10, ks=0.16, ex=600, axis=0)      # flooring along x (toward the window)
+mat('floor_z', (150, 100, 62), tex=10, ks=0.16, ex=600, axis=2)
+mat('walnut', (96, 62, 40), tex=4, ks=0.06, ex=90)
 mat('walnut_h', (104, 68, 44), tex=4, ks=0.06, ex=90, axis=0)
 mat('walnut_v', (104, 68, 44), tex=4, ks=0.06, ex=90, axis=1)
 mat('walnut_z', (104, 68, 44), tex=4, ks=0.06, ex=90, axis=2)
@@ -51,7 +51,7 @@ mat('ac', (238, 237, 234), ks=0.04, ex=60)
 mat('steeldoor', (70, 70, 68), ks=0.05, ex=80)
 mat('led', (255, 255, 255), emit=(5.0, 3.7, 2.1))                  # 2700K-ish indirect strip
 mat('spot_lens', (255, 255, 255), emit=(14.0, 11.5, 8.0))
-mat('sky', (255, 255, 255), emit=(2.2, 2.3, 2.45))
+mat('sky', (255, 255, 255), emit=(4.0, 4.15, 4.4))
 mat('bldg', (214, 214, 212), ks=0.02, ex=20)
 mat('bldg2', (196, 198, 200), ks=0.02, ex=20)
 mat('parapet', (226, 226, 222), ks=0.02, ex=20)
@@ -171,12 +171,13 @@ for i in range(5):
 # north alcove x 2.475-4.12: lit niche in the north wall, walnut frame
 setg('shell')
 NX1, NX2, NY1, NY2, ND = 2.95, 3.65, 1.00, 1.62, 0.16
-box(NX1, NY1, -ND, NX2, NY2, 0.0, 'walnut')                     # niche back+sides (cut into slab wall)
+box(NX1, NY1, -ND, NX2, NY2, 0.0, 'conc')                       # niche (cut into slab wall)
 setg('niche')
 box(NX1, NY1, -ND, NX2, NY1+0.02, 0.0, 'walnut_h')
 box(NX1-0.03, NY1-0.03, 0.0, NX2+0.03, NY1, 0.025, 'walnut_h'); box(NX1-0.03, NY2, 0.0, NX2+0.03, NY2+0.03, 0.025, 'walnut_h')
 box(NX1-0.03, NY1, 0.0, NX1, NY2, 0.025, 'walnut_v'); box(NX2, NY1, 0.0, NX2+0.03, NY2, 0.025, 'walnut_v')
 box(NX1+0.02, NY2-0.025, -0.06, NX2-0.02, NY2-0.015, -0.01, 'led', noshadow=True)
+light(((NX1+NX2)/2, NY2-0.04, -0.06), 1.6, d=(0, -1, 0.05), inner=55, outer=88, rad=0.12)
 cyl((3.15, NY1+0.02, -0.08), (3.15, NY1+0.26, -0.08), 0.06, 'vase')
 box(3.35, NY1+0.02, -0.12, 3.55, NY1+0.06, -0.03, 'book2')
 
@@ -208,7 +209,6 @@ box(2.39, 0, 2.636, 2.57, CH, Z_S, 'conc')
 setg('counter')
 box(2.57, 0, 2.636, 4.169, 0.98, 2.818, 'conc')                  # 腰壁 H980
 box(2.57, 0.98, 2.336, 4.20, 1.02, 2.84, 'walnut_h')             # bar counter top (overhang 300 to the LDK)
-box(2.57, 0.06, 2.62, 4.169, 0.08, 2.636, 'led', noshadow=True)  # foot light under the overhang... toe glow
 def stool(x, z):
     cyl((x, 0.66, z), (x, 0.69, z), 0.165, 'walnut')
     for k in range(4):
