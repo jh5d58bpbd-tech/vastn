@@ -402,7 +402,7 @@ VIEWS = {
     'datsui_1': view(6.25, 2.50, 4.95, 1.05, 96, sy=-0.40),
     'datsui_2': view(5.00, 1.75, 6.98, 2.50, 96, sy=-0.40),
     'datsui_3': view(5.05, 2.48, 6.98, 1.35, 96, sy=-0.40),
-    'datsui_4': view(6.30, 1.75, 4.85, 2.20, 92, sy=-0.40),
+    'datsui_4': view(6.30, 1.75, 4.85, 2.70, 92, sy=-0.40),
     # 玄関
     'genkan_1': view(5.20, 3.35, 6.98, 3.55, 84, cy=1.30, sy=-0.35),   # from the hall to the entrance door
     'genkan_2': view(6.80, 3.70, 3.4, 2.4, 84, cy=1.15),               # from the door into the house
