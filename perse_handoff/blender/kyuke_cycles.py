@@ -17,9 +17,12 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..', 'render'))
-import kyuke  # noqa: E402  (builds MATS / PRIMS / LIGHTS / VIEWS on import)
-import variants  # noqa: E402
-variants.apply(os.environ.get('VARIANT', ''))
+import importlib  # noqa: E402
+SCENE = os.environ.get('SCENE', 'kyuke')          # scene module in render/ (kyuke = staff room, morikawa = 森川ビル)
+kyuke = importlib.import_module(SCENE)            # builds MATS / PRIMS / LIGHTS / VIEWS on import
+if SCENE == 'kyuke':
+    import variants  # noqa: E402
+    variants.apply(os.environ.get('VARIANT', ''))
 
 import bpy  # noqa: E402
 from mathutils import Vector  # noqa: E402
@@ -108,7 +111,10 @@ def box_mesh(buf, c, h, R, mat_axis, seed, rad=0.0):
                         lp = grid_local[k]
                         ln.append(tuple(norms[k]))
                         luv.append((lp[g] + off, lp[o] + off * 0.37))
-                        luvn.append((0.5 - lp[2] / (2 * h[2]), 0.5 + lp[1] / (2 * h[1])))
+                        if a == 0:
+                            luvn.append((0.5 - lp[2] / (2 * h[2]), 0.5 + lp[1] / (2 * h[1])))
+                        else:
+                            luvn.append((0.5 + lp[0] / (2 * h[0]), 0.5 + lp[1] / (2 * h[1])))
             buf.add(verts, faces, ln, luv, luvn)
 
 
@@ -269,6 +275,40 @@ def wood_k(nb, u, v, seed):
     return k, ring
 
 
+TV_IMG = None
+def tv_image():
+    """Sunrise over a sea of clouds with a snow-capped peak (as in the reference perse)."""
+    global TV_IMG
+    if TV_IMG is not None:
+        return TV_IMG
+    Wp, Hp = 640, 360
+    rng = np.random.default_rng(7)
+    def fbm1(n, octaves=5, base=3):
+        out = np.zeros(n); a = 0.5
+        for o in range(octaves):
+            k = base * 2 ** o
+            out += a * np.interp(np.linspace(0, k, n), np.arange(k + 1), rng.random(k + 1)); a *= 0.5
+        return out
+    lin = lambda c: ((np.asarray(c, float) / 255 + 0.055) / 1.055) ** 2.4
+    y = np.linspace(1, 0, Hp)[:, None].repeat(Wp, 1); x = np.linspace(0, 1, Wp)[None, :].repeat(Hp, 0)
+    t = np.clip((y - 0.35) / 0.65, 0, 1)[..., None]
+    sky = lin((250, 196, 120)) * (1 - t) ** 2 + lin((90, 140, 210)) * (1 - (1 - t) ** 2)
+    img = sky.copy()
+    peak = 0.62 - 1.15 * np.abs(x - 0.47) + 0.03 * fbm1(Wp)[None, :]
+    m = y < peak; img[m] = lin((70, 70, 92))
+    snow = m & (y > peak - 0.07 - 0.05 * fbm1(Wp)[None, :]); img[snow] = lin((236, 238, 245))
+    ridge = y < 0.30 + 0.06 * fbm1(Wp, base=6)[None, :]; img[ridge] = lin((40, 36, 40))
+    cloud = (y < 0.36 + 0.05 * fbm1(Wp, base=5)[None, :]) & (y > 0.22)
+    img[cloud] = img[cloud] * 0.2 + lin((240, 236, 232)) * 0.8
+    fg = y < 0.12 + 0.05 * fbm1(Wp, base=8)[None, :]; img[fg] = lin((50, 34, 26))
+    im = bpy.data.images.new('tvimg', Wp, Hp, float_buffer=True)
+    im.colorspace_settings.name = 'Linear Rec.709'
+    rgba = np.concatenate([img[::-1], np.ones((Hp, Wp, 1))], -1).astype(np.float32)
+    im.pixels.foreach_set(rgba.ravel()); im.update(); im.pack()
+    TV_IMG = im
+    return im
+
+
 PICTURE_IMG = None
 def picture_image():
     """Landscape print for the wall art (approximation of pt.cpp pictureCol)."""
@@ -383,6 +423,72 @@ def make_material(idx):
         I['Roughness'].default_value = 0.9
         weave = nb.noise(pos, 600.0, 2.0)
         nt.links.new(nb.bump(weave, 0.15, 0.0005), I['Normal'])
+    elif tex == 9:   # exposed concrete: cloudy mottling, darker stains; bump>0 adds formwork joints + tie holes
+        nrm = nb.sep(geo.outputs['Normal'])
+        p = nb.sep(pos)
+        nx = nb.math('ABSOLUTE', nrm[0])
+        side = nb.math('GREATER_THAN', nx, 0.5)              # wall facing x -> use Y as horizontal
+        u = nb.add(nb.mul(p[1], side), nb.mul(p[0], nb.math('SUBTRACT', 1.0, side)))
+        v = p[2]
+        m1 = nb.noise(pos, 0.7, 6.0, 0.6); m2 = nb.noise(pos, 3.5, 4.0); m3 = nb.noise(pos, 22.0, 2.0)
+        stain = nb.smooth(0.52, 0.75, nb.noise(pos, 1.6, 5.0, 0.65))
+        k = nb.mul(nb.mul(nb.mad(m1, 0.75, 0.58), nb.mad(m2, 0.30, 0.85)), nb.mad(m3, 0.12, 0.94))
+        k = nb.mul(k, nb.mad(stain, -0.30, 1.0))
+        k = nb.mul(k, nb.mad(nb.smooth(0.6, 0.8, nb.noise(pos, 6.0, 3.0)), 0.12, 0.94))
+        height = nb.add(nb.mul(m2, 0.3), nb.mul(m3, 0.2))
+        if bump > 0:
+            up = nb.math('ABSOLUTE', nrm[2]); wall = nb.math('LESS_THAN', up, 0.5)
+            fu = nb.mul(nb.math('FRACT', nb.math('DIVIDE', u, 0.9)), 0.9)
+            fv = nb.mul(nb.math('FRACT', nb.math('DIVIDE', v, 0.6)), 0.6)
+            gap = nb.math('MINIMUM', nb.math('MINIMUM', fu, nb.math('SUBTRACT', 0.9, fu)),
+                          nb.math('MINIMUM', fv, nb.math('SUBTRACT', 0.6, fv)))
+            joint = nb.mul(nb.math('SUBTRACT', 1.0, nb.smooth(0.0008, 0.003, gap)), wall)
+            hu = nb.mul(nb.math('SUBTRACT', nb.math('FRACT', nb.math('DIVIDE', nb.add(u, 0.15), 0.45)), 0.5), 0.45)
+            hv = nb.mul(nb.math('SUBTRACT', nb.math('FRACT', nb.math('DIVIDE', nb.add(v, 0.15), 0.30)), 0.5), 0.30)
+            dist = nb.math('SQRT', nb.add(nb.mul(hu, hu), nb.mul(hv, hv)))
+            hole = nb.mul(nb.math('SUBTRACT', 1.0, nb.smooth(0.010, 0.014, dist)), wall)
+            # panel-to-panel tone shift
+            pid = nb.white(nb.add(nb.math('FLOOR', nb.math('DIVIDE', u, 0.9)), nb.mul(nb.math('FLOOR', nb.math('DIVIDE', v, 0.6)), 17.0)))
+            k = nb.mul(k, nb.mad(pid, 0.08, 0.96))
+            k = nb.mul(k, nb.mad(joint, -0.25, 1.0)); k = nb.mul(k, nb.mad(hole, -0.55, 1.0))
+            height = nb.add(height, nb.mul(nb.add(joint, hole), -1.5))
+        nt.links.new(nb.scale_col(base, k), I['Base Color'])
+        nt.links.new(nb.mad(m2, 0.15, 0.72), I['Roughness'])
+        nt.links.new(nb.bump(height, 0.25, 0.002), I['Normal'])
+    elif tex == 10:  # walnut / acacia flooring with strong plank-to-plank colour variation
+        p = nb.sep(pos)
+        along = p[0] if axis == 0 else nb.mul(p[1], -1.0)
+        across = nb.mul(p[1], -1.0) if axis == 0 else p[0]
+        pw = 0.125
+        row = nb.math('FLOOR', nb.math('DIVIDE', across, pw))
+        plen = 0.9
+        px = nb.mad(nb.white(row), 3.0, along)
+        pid = nb.math('FLOOR', nb.math('DIVIDE', px, plen))
+        tone = nb.white(nb.mad(row, 13.1, nb.mul(pid, 7.7)))
+        seed = nb.mad(row, 3.1, nb.mul(pid, 1.3))
+        k, ring = wood_k(nb, nb.mul(px, 0.6), across, seed)
+        streak = nb.noise(nb.xyz(nb.mad(px, 0.8, seed), nb.mul(across, 14.0), 0.0), 1.0, 3.0)
+        mixf = nb.math('POWER', nb.add(nb.mul(tone, 0.75), nb.mul(streak, 0.35)), 1.3)
+        cm = nb.N.new('ShaderNodeMix'); cm.data_type = 'RGBA'
+        nb.link(nb.math('MINIMUM', mixf, 1.0), cm.inputs['Factor'])
+        cm.inputs['A'].default_value = (*[float(x) for x in kyuke.srgb(56, 32, 19)], 1)
+        cm.inputs['B'].default_value = (*[float(x) for x in kyuke.srgb(170, 112, 64)], 1)
+        fz = nb.mul(nb.math('FRACT', nb.math('DIVIDE', across, pw)), pw)
+        fx = nb.mul(nb.math('FRACT', nb.math('DIVIDE', px, plen)), plen)
+        gap = nb.math('MINIMUM', nb.math('MINIMUM', fz, nb.math('SUBTRACT', pw, fz)),
+                      nb.math('MINIMUM', fx, nb.math('SUBTRACT', plen, fx)))
+        gk = nb.mad(nb.smooth(0.0006, 0.0022, gap), 0.6, 0.4)
+        col = nb.mulvec(cm.outputs['Result'], nb.mul(k, gk))
+        nt.links.new(col, I['Base Color'])
+        nt.links.new(nb.bump(nb.add(gk, nb.mul(ring, 0.05)), 0.25, 0.002), I['Normal'])
+        nt.links.new(nb.mad(tone, 0.10, rough * 0.85), I['Roughness'])
+    elif tex == 11:  # TV picture
+        img = nt.nodes.new('ShaderNodeTexImage'); img.image = tv_image()
+        uv2 = nt.nodes.new('ShaderNodeUVMap'); uv2.uv_map = 'UVN'
+        nt.links.new(uv2.outputs['UV'], img.inputs['Vector'])
+        I['Base Color'].default_value = (0, 0, 0, 1)
+        nt.links.new(img.outputs['Color'], I['Emission Color']); I['Emission Strength'].default_value = 0.45
+        I['Roughness'].default_value = 0.15
     elif tex == 7:
         k = nb.mad(nb.noise(pos, 45.0, 3.0), 0.18, 0.88)
         nt.links.new(nb.scale_col(base, k), I['Base Color'])
