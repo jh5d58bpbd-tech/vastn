@@ -248,7 +248,6 @@ cyl((5.13, 1.10, KZ+0.17), (5.13, 1.55, KZ+0.17), 0.008, 'steel')
 # hall shoe cabinet (x 5.035-5.74, z 2.71-3.06), floating with under-light
 setg('shoe')
 box(5.035, 0.20, 2.71, 5.74, 1.05, 3.06, 'walnut_h')
-box(5.05, 0.19, 2.75, 5.72, 0.20, 3.02, 'led', noshadow=True)
 cyl((5.25, 1.05, 2.88), (5.25, 1.30, 2.88), 0.05, 'vase')
 
 # 玄関 (x 5.88-6.98, z 2.71-4.435): 土間 150 lower, walnut 框, steel entrance door on the east wall
@@ -287,8 +286,6 @@ box(6.40, 0.80, 1.33, X_W, 0.84, 2.27, 'walnut_z')
 ell((6.70, 0.86, 1.80), (0.18, 0.04, 0.24), np.eye(3), 'ceramic')
 cyl((6.93, 0.84, 1.80), (6.93, 1.10, 1.80), 0.012, 'black'); cyl((6.93, 1.10, 1.80), (6.80, 1.10, 1.80), 0.011, 'black')
 box(X_W-0.02, 1.05, 1.45, X_W, 1.85, 2.15, 'mirror')               # mirror (glass over dark)
-box(X_W-0.025, 1.84, 1.45, X_W-0.02, 1.86, 2.15, 'led', noshadow=True)
-box(6.45, 0.18, 1.37, X_W, 0.19, 2.23, 'led', noshadow=True)
 # towel bar on the south wall
 cyl((5.40, 1.20, 2.62), (6.10, 1.20, 2.62), 0.01, 'black')
 box(5.55, 0.80, 2.60, 5.95, 1.21, 2.625, 'towel')
@@ -304,7 +301,6 @@ cyl((5.00, 0.98, 0.09), (5.00, 1.15, 0.09), 0.04, 'vase')
 box(5.20, 0.98, 0.04, 5.40, 1.16, 0.14, 'book2')
 cyl((4.95, 0.70, 0.94), (5.08, 0.70, 0.94), 0.055, 'towel')       # paper holder roll
 box(4.92, 0.76, 0.93, 5.11, 0.77, 0.955, 'black')
-box(4.20, 2.20, 0.0, 5.575, 2.21, 0.06, 'led', noshadow=True)   # indirect line along the north wall top
 
 # window: aluminium sliding frame + glass, walnut casing (balcony beyond)
 setg('window')
