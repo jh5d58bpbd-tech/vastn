@@ -154,7 +154,7 @@ for (y, z, m) in ((0.475, 0.35, 'basket'), (0.875, 0.70, 'book1'), (1.275, 0.40,
         cyl((2.15, y, z), (2.15, y+0.22, z), 0.06, 'vase')
     else:
         box(2.0, y, z-0.15, 2.32, y+0.18, z+0.15, m)
-light((2.30, 1.95, 0.6), 1.2, d=(0, -1, 0), inner=60, outer=85, rad=0.2)
+light((2.10, 2.05, 0.6), 0.35, d=(0, -1, 0), inner=50, outer=80, rad=0.15)
 setg('trim')
 box(2.475, 0, 0.17, 2.50, DH+0.03, 0.20, 'walnut_v'); box(2.475, 0, 0.98, 2.50, DH+0.03, 1.01, 'walnut_v')
 box(2.475, DH, 0.17, 2.50, DH+0.03, 1.01, 'walnut_z')
@@ -394,7 +394,7 @@ def view(cx, cz, tx, tz, fov, drop=(), cy=1.25, sy=-0.05):
 
 VIEWS = {
     # LDK
-    'ldk_1': view(4.75, 1.95, 0.0, 2.55, 80),                     # toward the balcony window: counter left, TV wall right
+    'ldk_1': view(4.40, 1.90, 0.0, 2.60, 80),                     # toward the balcony window: counter left, TV wall right
     'ldk_2': view(1.35, 3.95, 1.45, 0.0, 80, drop={'plant_w'}),   # TV wall straight on (reference composition)
     'ldk_3': view(0.45, 1.45, 3.9, 3.7, 80, drop={'plant_n'}),    # from the window toward bar counter + kitchen
     'ldk_4': view(3.55, 1.70, 3.45, 4.435, 82, cy=1.50, sy=-0.25),           # kitchen from the hall
