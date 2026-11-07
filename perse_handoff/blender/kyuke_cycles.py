@@ -493,6 +493,45 @@ def make_material(idx):
         nt.links.new(col, I['Base Color'])
         nt.links.new(nb.bump(nb.add(gk, nb.mul(ring, 0.05)), 0.25, 0.002), I['Normal'])
         nt.links.new(nb.mad(tone, 0.08, rough * 0.6), I['Roughness'])
+    elif tex == 12:  # large-format stone-look tile (bump = tile size in m), grout lines
+        p = nb.sep(pos); X, Y = p[0], p[1]
+        s = bump if bump > 0 else 0.45
+        fx = nb.mul(nb.math('FRACT', nb.math('DIVIDE', X, s)), s)
+        fy = nb.mul(nb.math('FRACT', nb.math('DIVIDE', Y, s)), s)
+        gap = nb.math('MINIMUM', nb.math('MINIMUM', fx, nb.math('SUBTRACT', s, fx)),
+                      nb.math('MINIMUM', fy, nb.math('SUBTRACT', s, fy)))
+        grout = nb.smooth(0.0008, 0.0022, gap)
+        tid = nb.white(nb.add(nb.math('FLOOR', nb.math('DIVIDE', X, s)), nb.mul(nb.math('FLOOR', nb.math('DIVIDE', Y, s)), 17.0)))
+        m1 = nb.noise(pos, 3.0, 6.0, 0.6)
+        m2 = nb.noise(pos, 18.0, 3.0)
+        k = nb.mul(nb.mul(nb.mad(m1, 0.16, 0.92), nb.mad(m2, 0.06, 0.97)), nb.mad(tid, 0.06, 0.97))
+        k = nb.mul(k, nb.mad(grout, 0.35, 0.65))
+        nt.links.new(nb.scale_col(base, k), I['Base Color'])
+        nt.links.new(nb.bump(grout, 0.35, 0.002), I['Normal'])
+    elif tex == 13:  # terrazzo: stone chips from Voronoi cells on a light base
+        def chips(scale, thr, keep):
+            v = nt.nodes.new('ShaderNodeTexVoronoi'); v.voronoi_dimensions = '3D'
+            nt.links.new(pos, v.inputs['Vector']); v.inputs['Scale'].default_value = scale
+            sepc = nt.nodes.new('ShaderNodeSeparateColor'); nt.links.new(v.outputs['Color'], sepc.inputs[0])
+            mask = nb.mul(nb.math('LESS_THAN', v.outputs['Distance'], thr), nb.math('GREATER_THAN', sepc.outputs[0], keep))
+            ramp = nt.nodes.new('ShaderNodeValToRGB'); ramp.color_ramp.interpolation = 'CONSTANT'
+            cols = [(150, 148, 144), (186, 122, 94), (72, 70, 68), (250, 248, 244), (196, 190, 180)]
+            els = ramp.color_ramp.elements
+            while len(els) < len(cols):
+                els.new(0.5)
+            for i, cc in enumerate(cols):
+                els[i].position = i / len(cols); els[i].color = (*[float(x) for x in kyuke.srgb(*cc)], 1)
+            nt.links.new(sepc.outputs[1], ramp.inputs['Fac'])
+            return mask, ramp.outputs['Color']
+        m_big, c_big = chips(28.0, 0.30, 0.55)
+        m_small, c_small = chips(90.0, 0.28, 0.40)
+        basek = nb.mad(nb.noise(pos, 6.0, 3.0), 0.06, 0.97)
+        col = nb.scale_col(base, basek)
+        mx1 = nt.nodes.new('ShaderNodeMix'); mx1.data_type = 'RGBA'
+        nb.link(m_small, mx1.inputs['Factor']); nt.links.new(col, mx1.inputs['A']); nt.links.new(c_small, mx1.inputs['B'])
+        mx2 = nt.nodes.new('ShaderNodeMix'); mx2.data_type = 'RGBA'
+        nb.link(m_big, mx2.inputs['Factor']); nt.links.new(mx1.outputs['Result'], mx2.inputs['A']); nt.links.new(c_big, mx2.inputs['B'])
+        nt.links.new(mx2.outputs['Result'], I['Base Color'])
     elif tex == 11:  # TV picture
         img = nt.nodes.new('ShaderNodeTexImage')
         shot = os.path.join(HERE, '..', 'refs', SCENE, 'tv_screen.jpg')
